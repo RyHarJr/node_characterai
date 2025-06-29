@@ -1,0 +1,1 @@
+{"version":3,"file":"groupChats.d.ts","sourceRoot":"","sources":["../../src/groupchat/groupChats.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,WAAW,EAAE,MAAM,WAAW,CAAC;AAExC,qBAAa,UAAU;IAEnB,OAAO,CAAC,MAAM,CAAc;IAGtB,cAAc;IAGd,eAAe;IAKf,eAAe;IAGf,mBAAmB;gBAKb,MAAM,EAAE,WAAW;CAGlC"}
