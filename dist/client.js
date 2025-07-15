@@ -15,7 +15,7 @@ const uuid_1 = require("uuid");
 const groupChats_1 = require("./groupchat/groupChats");
 const recentCharacter_1 = require("./character/recentCharacter");
 // import { CAICall, ICharacterCallOptions } from './character/call';
-const voice_1 = require("./voice");
+// import { CAIVoice } from './voice';
 const groupChatConversation_1 = require("./groupchat/groupChatConversation");
 const searchCharacter_1 = require("./character/searchCharacter");
 const fallbackEdgeRollout = '60';
@@ -105,25 +105,12 @@ class CharacterAI {
         (_a = this.dmChatWebsocket) === null || _a === void 0 ? void 0 : _a.close();
         (_b = this.groupChatWebsocket) === null || _b === void 0 ? void 0 : _b.close();
     }
-    // public currentCall?: CAICall = undefined;
-    // async connectToCall(call: CAICall, options: ICharacterCallOptions): Promise<CAICall> {
-    //     this.checkAndThrow(CheckAndThrow.RequiresToNotBeInCall);
-    //     this.currentCall = call;
-    //     await call.connectToSession(options, this.token, this.myProfile.username);
-    //     return call;
-    // }
-    // async disconnectFromCall() {
-    //     this.checkAndThrow(CheckAndThrow.RequiresToBeInCall);
-    //     return await this.currentCall?.hangUp();
-    // }
-    // profile fetching
     async fetchProfileByUsername(username) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const profile = new publicProfile_1.PublicProfile(this, { username });
         await profile.refreshProfile();
         return profile;
     }
-    // character fetching
     async searchCharacter(query) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         if (query.trim() == "")
@@ -142,12 +129,7 @@ class CharacterAI {
         for (let i = 0; i < rawCharacters.length; i++)
             characters.push(new searchCharacter_1.SearchCharacter(this, rawCharacters[i]));
         const { uuid, safety_filtered: safetyFiltered, tags } = response;
-        return {
-            characters,
-            safetyFiltered,
-            tags,
-            uuid
-        };
+        return { characters, safetyFiltered, tags, uuid };
     }
     async searchCharacterByTags(query, ...tags) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -155,14 +137,8 @@ class CharacterAI {
             throw new Error("You must provide atleast one tag");
         const search = await this.searchCharacter(query);
         let { characters, safetyFiltered, tags: rawTags, uuid } = search;
-        // filter characters by tag
         characters = characters.filter(character => tags.includes(character.tagId));
-        return {
-            characters,
-            safetyFiltered,
-            rawTags,
-            uuid
-        };
+        return { characters, safetyFiltered, rawTags, uuid };
     }
     async fetchCharacter(characterId) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -189,7 +165,6 @@ class CharacterAI {
             throw new Error("Failed to fetch character");
         return response.tags;
     }
-    // search queries
     async getSearchStringQuery(endpoint, suffix = "_search_queries", useKey) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const request = await this.requester.request(`https://neo.character.ai/search/v1/query/${endpoint}`, {
@@ -207,47 +182,6 @@ class CharacterAI {
         const encodedQuery = this.encodeQuery(query);
         return await this.getSearchStringQuery(`autocomplete?query_prefix=${encodedQuery}`, "_autocomplete", "search");
     }
-    // voice
-    async internalFetchCharacterVoices(endpoint, query) {
-        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        const encodedQuery = this.encodeQuery(query !== null && query !== void 0 ? query : "");
-        const request = await this.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${endpoint}${encodedQuery}`, {
-            method: 'GET',
-            includeAuthorization: true
-        });
-        const response = await parser_1.default.parseJSON(request);
-        if (!request.ok)
-            throw new Error(String(response));
-        const { voices: responseVoices } = response;
-        let voices = [];
-        for (let i = 0; i < responseVoices.length; i++)
-            voices.push(new voice_1.CAIVoice(this, responseVoices[i]));
-        return voices;
-    }
-    // v1/voices/search?characterName=
-    async searchCharacterVoices(query) { return await this.internalFetchCharacterVoices("search?characterName=", query); }
-    // v1/voices/system
-    async fetchSystemVoices() { return await this.internalFetchCharacterVoices("system"); }
-    // v1/voices/user
-    async fetchMyVoices() { return await this.internalFetchCharacterVoices("user"); }
-    // v1/voices/search?creatorInfo.username=
-    async fetchVoicesFromUser(username) { return await this.internalFetchCharacterVoices("search?creatorInfo.username=", username); }
-    // v1/voices/featured
-    async getFeaturedVoices() { return await this.internalFetchCharacterVoices("featured"); }
-    // v1/voices/voiceId
-    async fetchVoice(voiceId) {
-        this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        const request = await this.requester.request(`https://neo.character.ai/multimodal/api/v1/voices/${voiceId}`, {
-            method: 'GET',
-            includeAuthorization: true
-        });
-        const response = await parser_1.default.parseJSON(request);
-        if (!request.ok)
-            throw new Error(String(response));
-        return new voice_1.CAIVoice(this, response.voice);
-    }
-    // models
-    // https://neo.character.ai/get-available-models
     async getAvailableModels() {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const request = await this.requester.request("https://neo.character.ai/get-available-models", {
@@ -262,7 +196,6 @@ class CharacterAI {
             defaultModelType: response.default_model_type
         };
     }
-    // https://neo.character.ai/recommendation/v1/
     async automateCharactersRecommendation(endpoint, CharacterClass, key = "characters", baseEndpoint = "https://neo.character.ai/recommendation/v1/") {
         const request = await this.requester.request(`${baseEndpoint}${endpoint}`, {
             method: 'GET',
@@ -278,14 +211,9 @@ class CharacterAI {
             targetCharacters.push(new CharacterClass(this, characters[id]));
         return targetCharacters;
     }
-    // suggestions/discover
-    // /featured
     async getFeaturedCharacters() { return await this.automateCharactersRecommendation("featured", character_1.Character); }
-    // /user
     async getRecommendedCharactersForYou() { return await this.automateCharactersRecommendation("user", character_1.Character); }
-    // https://neo.character.ai/chats/recent/
     async getRecentCharacters() { return await this.automateCharactersRecommendation("https://neo.character.ai/chats/recent/", recentCharacter_1.RecentCharacter, "chats", ""); }
-    // /category
     async getCharacterCategories() {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const request = await this.requester.request("https://neo.character.ai/recommendation/v1/category", {
@@ -298,10 +226,7 @@ class CharacterAI {
         return response.categories;
     }
     async getSimilarCharactersTo(characterId) { return await this.automateCharactersRecommendation(`character/${characterId}`, character_1.Character); }
-    // https://plus.character.ai/chat/user/characters/upvoted/
     async getLikedCharacters() { return await this.automateCharactersRecommendation("", character_1.Character, "characters", "https://plus.character.ai/chat/user/characters/upvoted/"); }
-    // conversations
-    // raw is the raw output else the convo instance
     async fetchRawConversation(chatId) {
         var _a;
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
@@ -321,7 +246,6 @@ class CharacterAI {
         return conversation;
     }
     async fetchGroupChatConversation() {
-        // todo, placeholder rn
         return new groupChatConversation_1.GroupChatConversation(this, {});
     }
     async fetchLatestDMConversationWith(characterId) {
@@ -357,19 +281,15 @@ class CharacterAI {
         const response = await parser_1.default.parseJSON(request);
         if (!request.ok)
             throw new Error(response);
-        const { voiceOverrides: voiceOverridesIds, default_persona_id: defaultPersonaId, personaOverrides: personaOverridesIds } = response;
-        const fetchVoiceOverrides = async () => this.automateOverrideFetching(voiceOverridesIds, this.fetchVoice);
+        const { default_persona_id: defaultPersonaId, personaOverrides: personaOverridesIds } = response;
         const fetchPersonaOverrides = async () => this.automateOverrideFetching(personaOverridesIds, this.myProfile.fetchPersona);
         return {
             defaultPersonaId,
             personaOverridesIds,
-            voiceOverridesIds,
             fetchDefaultPersona: async () => await this.myProfile.fetchPersona(defaultPersonaId),
-            fetchVoiceOverrides,
             fetchPersonaOverrides
         };
     }
-    // persona (linked to settings)
     async setPersonaOverrideFor(characterId, personaId) {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const settings = await this.fetchSettings();
@@ -391,38 +311,30 @@ class CharacterAI {
         const personaOverrides = await settings.fetchPersonaOverrides();
         return personaOverrides[characterId];
     }
-    // authentication
     async authenticate(sessionToken) {
         this.checkAndThrow(CheckAndThrow.RequiresNoAuthentication);
         if (sessionToken.startsWith("Token "))
-            sessionToken = sessionToken.substring("Token ".length, sessionToken.length);
+            sessionToken = sessionToken.substring("Token ".length);
         if (sessionToken.length != 40)
-            console.warn(`===============================================================================
-WARNING: CharacterAI has changed its authentication methods again.
-            For easier development purposes, usage of session tokens will be used.
-            See: https://github.com/realcoloride/node_characterai/issues/146
-===============================================================================`);
+            console.warn("WARNING: Invalid token length.");
         this.requester.updateToken(sessionToken);
         const request = await this.requester.request("https://plus.character.ai/chat/user/settings/", {
             method: "GET",
             includeAuthorization: true
         });
         if (!request.ok)
-            throw Error("Invaild authentication token.");
+            throw Error("Invalid authentication token.");
         this.token = sessionToken;
-        // reload info
         await this.myProfile.refreshProfile();
-        // connect to endpoints
         await this.openWebsockets();
     }
     unauthenticate() {
         this.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        // this.disconnectFromCall();
         this.closeWebsockets();
         this.token = "";
     }
     throwBecauseNotAvailableYet(additionalDetails) {
-        throw Error("This feature is not available yet due to some restrictions from CharacterAI. Sorry!\nDetails: " + additionalDetails);
+        throw Error("This feature is not available yet.\nDetails: " + additionalDetails);
     }
     encodeQuery(query) {
         const encodedQuery = encodeURIComponent(query);
@@ -430,16 +342,11 @@ WARNING: CharacterAI has changed its authentication methods again.
             throw new Error("The query must not be empty");
         return encodedQuery;
     }
-    // allows for quick auth errors
-    checkAndThrow(argument, requiresAuthenticatedMessage = "You must be authenticated to do this.") {
+    checkAndThrow(argument, msg = "You must be authenticated to do this.") {
         if (argument == CheckAndThrow.RequiresAuthentication && !this.authenticated)
-            throw Error(requiresAuthenticatedMessage);
+            throw Error(msg);
         if (argument == CheckAndThrow.RequiresNoAuthentication && this.authenticated)
             throw Error("Already authenticated");
-        // if (argument == CheckAndThrow.RequiresToNotBeInCall && this.currentCall)
-        //     throw Error("You are already in a call. CharacterAI currently limits to 1 call per account.");
-        // if (argument == CheckAndThrow.RequiresToBeInCall && !this.currentCall)
-        //     throw Error("You need to be in a call.");
     }
     constructor() {
         this.token = "";

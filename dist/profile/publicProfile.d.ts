@@ -1,6 +1,4 @@
 import { CharacterAI } from "../client";
-import { CAIImage as CAIImage } from '../utils/image';
-import { CAIVoice } from '../voice';
 import { Character } from '../character/character';
 export declare class PublicProfile {
     characters: Character[];
@@ -14,7 +12,6 @@ export declare class PublicProfile {
     private num_followers;
     get followersCount(): number;
     set followersCount(value: number);
-    avatar: CAIImage;
     subscriptionType: string;
     bio: string | null;
     creatorInformation: any;
@@ -25,7 +22,6 @@ export declare class PublicProfile {
     getFollowing(page?: number): Promise<void>;
     protected loadFromInformation(information: any): void;
     protected loadCharacters(characters: any[]): void;
-    getVoices(): Promise<CAIVoice[]>;
     refreshProfile(): Promise<void>;
     constructor(client: CharacterAI, options?: any);
 }

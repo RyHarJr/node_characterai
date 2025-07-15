@@ -7,7 +7,6 @@ import { GroupChatConversation } from "../groupchat/groupChatConversation";
 export declare class CAIMessage extends Specable {
     private client;
     private conversation;
-    private image?;
     private turn_key;
     get turnKey(): {
         chatId: any;

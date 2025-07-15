@@ -6,7 +6,6 @@ import DMConversation from './chat/dmConversation';
 import { Character } from './character/character';
 import { GroupChats } from './groupchat/groupChats';
 import { RecentCharacter } from './character/recentCharacter';
-import { CAIVoice } from './voice';
 import { CharacterTags, SearchCharacter } from './character/searchCharacter';
 import { Persona } from './profile/persona';
 export declare enum CheckAndThrow {
@@ -46,13 +45,6 @@ export declare class CharacterAI {
     getPopularSearches(): Promise<string[]>;
     getTrendingSearches(): Promise<string[]>;
     getSearchAutocomplete(query: string): Promise<string[]>;
-    private internalFetchCharacterVoices;
-    searchCharacterVoices(query: string): Promise<CAIVoice[]>;
-    fetchSystemVoices(): Promise<CAIVoice[]>;
-    fetchMyVoices(): Promise<CAIVoice[]>;
-    fetchVoicesFromUser(username: string): Promise<CAIVoice[]>;
-    getFeaturedVoices(): Promise<CAIVoice[]>;
-    fetchVoice(voiceId: string): Promise<CAIVoice>;
     getAvailableModels(): Promise<{
         availableModels: string[];
         defaultModelType: string;
@@ -72,9 +64,7 @@ export declare class CharacterAI {
     fetchSettings(): Promise<{
         defaultPersonaId: any;
         personaOverridesIds: any;
-        voiceOverridesIds: any;
         fetchDefaultPersona: () => Promise<Persona | undefined>;
-        fetchVoiceOverrides: () => Promise<Record<string, CAIVoice>>;
         fetchPersonaOverrides: () => Promise<Record<string, Persona>>;
     }>;
     setPersonaOverrideFor(characterId: string, personaId: string): Promise<void>;
@@ -83,7 +73,7 @@ export declare class CharacterAI {
     unauthenticate(): void;
     throwBecauseNotAvailableYet(additionalDetails: string): void;
     private encodeQuery;
-    checkAndThrow(argument: CheckAndThrow, requiresAuthenticatedMessage?: string): void;
+    checkAndThrow(argument: CheckAndThrow, msg?: string): void;
     constructor();
 }
 //# sourceMappingURL=client.d.ts.map

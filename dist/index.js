@@ -16,12 +16,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // client
 __exportStar(require("./client"), exports);
-// voice
-__exportStar(require("./voice"), exports);
 // warnings
 __exportStar(require("./warnings"), exports);
-// /utils
-__exportStar(require("./utils/image"), exports);
 // /profile
 __exportStar(require("./profile/persona"), exports);
 __exportStar(require("./profile/privateProfile"), exports);

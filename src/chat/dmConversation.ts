@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 const generateBaseMessagePayload = (
     characterId: string,
-    username: string, // our username
-) => { return {
+    username: string,
+) => ({
     character_id: characterId,
     selected_language: "",
     tts_enabled: false,
@@ -38,69 +38,74 @@ const generateBaseMessagePayload = (
         helpful: 0,
         not_helpful: 0
     }
-}};
+});
 
 const generateBaseSendingPayload = (
     message: string,
     characterId: string,
-    username: string, // our username
+    username: string,
     turnId: string,
     chatId: string,
-    userId: number,
-    imageUrl?: string
-) => { return {...generateBaseMessagePayload(characterId, username),
+    userId: number
+) => ({
+    ...generateBaseMessagePayload(characterId, username),
     num_candidates: 1,
     turn: {
         turn_key: { turn_id: turnId, chat_id: chatId },
         author: { author_id: userId.toString(), is_human: true, name: username },
         candidates: [{
             candidate_id: turnId,
-            raw_content: message,
-            ...imageUrl ? { tti_image_rel_path: imageUrl } : {}
+            raw_content: message
         }],
         primary_candidate_id: turnId
     }
-}};
+});
 
 const generateBaseRegeneratingPayload = (
     characterId: string,
     turnId: string,
-    username: string, // our username
+    username: string,
     chatId: string
-) => { return {...generateBaseMessagePayload(characterId, username),
+) => ({
+    ...generateBaseMessagePayload(characterId, username),
     turn_key: { turn_id: turnId, chat_id: chatId },
-}};
+});
 
 export default class DMConversation extends Conversation {
     async resurrect() {
-        const resurectionRequest = await this.client.requester.request(`https://neo.character.ai/chats/recent/${this.chatId}`, {
-            method: 'GET',
-            includeAuthorization: true
-        });
+        const resurectionRequest = await this.client.requester.request(
+            `https://neo.character.ai/chats/recent/${this.chatId}`,
+            {
+                method: 'GET',
+                includeAuthorization: true
+            }
+        );
         const resurectionResponse = await Parser.parseJSON(resurectionRequest);
         if (!resurectionRequest.ok) throw new Error(resurectionResponse);
     }
 
     async archive() {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        
-        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/archive`, {
-            method: 'PATCH',
-            includeAuthorization: true,
-            contentType: 'application/json'
-        });
-
+        const request = await this.client.requester.request(
+            `https://neo.character.ai/chat/${this.chatId}/archive`,
+            {
+                method: 'PATCH',
+                includeAuthorization: true,
+                contentType: 'application/json'
+            }
+        );
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
     }
+
     async unarchive(refreshMessagesAfter: boolean = true): Promise<DMConversation | void> {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        
-        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/unarchive`, {
-            method: 'PATCH',
-            includeAuthorization: true,
-            contentType: 'application/json'
-        });
+        const request = await this.client.requester.request(
+            `https://neo.character.ai/chat/${this.chatId}/unarchive`,
+            {
+                method: 'PATCH',
+                includeAuthorization: true,
+                contentType: 'application/json'
+            }
+        );
 
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
@@ -113,42 +118,36 @@ export default class DMConversation extends Conversation {
     async duplicate() {
         await this.refreshMessages();
         const lastMessage = this.getLastMessage();
-
-        if (!lastMessage) throw new Error("You must have atleast one message in the conversation to do this");
+        if (!lastMessage) throw new Error("You must have at least one message in the conversation to do this");
         return await lastMessage.copyFromHere(true) as DMConversation;
     }
 
     async rename(newName: string) {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        
-        const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/update_name`, {
-            method: 'PATCH',
-            includeAuthorization: true,
-            body: Parser.stringify({ name: newName }),
-            contentType: 'application/json'
-        });
+        const request = await this.client.requester.request(
+            `https://neo.character.ai/chat/${this.chatId}/update_name`,
+            {
+                method: 'PATCH',
+                includeAuthorization: true,
+                body: Parser.stringify({ name: newName }),
+                contentType: 'application/json'
+            }
+        );
 
         const response = await Parser.parseJSON(request);
         if (!request.ok) throw new Error(response);
     }
 
     // async call(options: ICharacterCallOptions): Promise<CAICall> {
-    //     // oh boy im hyped for this
     //     const call = new CAICall(this.client, this);
     //     return await this.client.connectToCall(call, options);
     // }
 
     async sendMessage(content: string, options?: ICAIMessageSending): Promise<CAIMessage> {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
+        if (this.frozen) Warnings.show("sendingFrozen");
 
-        if (this.frozen)
-            Warnings.show("sendingFrozen");
-        
-        // manual turn is FALSE by default
         const request = await this.client.sendDMWebsocketCommandAsync({
             command: (options?.manualTurn ?? false) ? "create_chat" : "create_and_generate_turn",
             originId: "Android",
-            
             streaming: false,
             payload: generateBaseSendingPayload(
                 content,
@@ -156,22 +155,17 @@ export default class DMConversation extends Conversation {
                 this.client.myProfile.username,
                 uuidv4(),
                 this.chatId,
-                this.client.myProfile.userId,
-                options?.image?.endpointUrl ?? ""
+                this.client.myProfile.userId
             )
         });
-        
-        // here we should receive OUR message not theirs if selected. im not sure how to do this but i will see
+
         return this.addMessage(new CAIMessage(this.client, this, request.turn));
     }
 
     async regenerateMessage(message: CAIMessage) {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
-        
         const request = await this.client.sendDMWebsocketCommandAsync({
             command: "generate_turn_candidate",
             originId: "Android",
-            
             streaming: false,
             payload: generateBaseRegeneratingPayload(
                 this.characterId,
@@ -180,7 +174,7 @@ export default class DMConversation extends Conversation {
                 this.chatId
             )
         });
-        
+
         message.indexTurn(request.turn);
         return message;
     }

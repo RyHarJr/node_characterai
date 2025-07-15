@@ -1,12 +1,8 @@
 // client
 export * from "./client";
-// voice
-export * from "./voice";
+
 // warnings
 export * from './warnings';
-
-// /utils
-export * from './utils/image';
 
 // /profile
 export * from "./profile/persona";

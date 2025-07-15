@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CAIMessage = void 0;
 const specable_1 = require("../utils/specable");
 const client_1 = require("../client");
-const image_1 = require("../utils/image");
 const patcher_1 = __importDefault(require("../utils/patcher"));
 const candidate_1 = require("./candidate");
 const conversation_1 = require("./conversation");
@@ -279,10 +278,6 @@ __decorate([
     specable_1.hiddenProperty,
     __metadata("design:type", conversation_1.Conversation)
 ], CAIMessage.prototype, "conversation", void 0);
-__decorate([
-    specable_1.hiddenProperty,
-    __metadata("design:type", image_1.CAIImage)
-], CAIMessage.prototype, "image", void 0);
 __decorate([
     specable_1.hiddenProperty,
     __metadata("design:type", Object)

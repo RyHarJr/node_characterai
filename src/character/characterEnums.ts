@@ -1,6 +1,3 @@
-import { CAIImage } from "../utils/image";
-import { CAIVoice } from "../voice";
-
 export enum CharacterVote {
     None,
     Like,
@@ -17,27 +14,21 @@ export interface ICharacterCreationExtraOptions {
     tagline?: string;
     description?: string;
 
-    definition?: string,
-    keepCharacterDefintionPrivate?: boolean,
+    definition?: string;
+    keepCharacterDefintionPrivate?: boolean;
 
-    allowDynamicGreeting?: boolean,
-
-    voiceOrId?: CAIVoice | string,
-    avatar?: CAIImage
+    allowDynamicGreeting?: boolean;
 }
 
 export interface ICharacterModificationOptions {
-    newName?: string,
-    newGreeting?: string,
-    newVisbility?: CharacterVisibility
-    
+    newName?: string;
+    newGreeting?: string;
+    newVisbility?: CharacterVisibility;
+
     newTagline?: string;
     newDescription?: string;
 
-    newDefinition?: string,
-    keepCharacterDefintionPrivate?: boolean,
-    enableDynamicGreeting?: boolean,
-
-    voiceOrId?: CAIVoice | string,
-    editAvatar: boolean
+    newDefinition?: string;
+    keepCharacterDefintionPrivate?: boolean;
+    enableDynamicGreeting?: boolean;
 }

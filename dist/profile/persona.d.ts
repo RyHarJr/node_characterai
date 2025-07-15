@@ -1,18 +1,13 @@
 import { CharacterAI } from "../client";
-import { CAIImage } from "../utils/image";
 import { Specable } from "../utils/specable";
 export interface IPersonaEditOptions {
     name?: string;
     definition?: string;
-    image?: CAIImage;
 }
 export declare class Persona extends Specable {
     private client;
     private external_id;
     get externalId(): string;
-    /**
-     * This variable redirects to `externalId`
-     */
     get id(): string;
     private title;
     private name;
@@ -21,14 +16,12 @@ export declare class Persona extends Specable {
     private greeting;
     private description;
     private identifier;
-    avatar: CAIImage;
+    avatar: null;
     private songs;
     private img_gen_enabled;
     get imageGenerationEnabled(): boolean;
-    set imageGenerationEnabled(value: boolean);
-    private base_img_prompt;
     get baseImagePrompt(): string;
-    set baseImagePrompt(value: string);
+    private base_img_prompt;
     private img_prompt_regex;
     private strip_img_prompt_from_msg;
     definition: string;

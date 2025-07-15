@@ -1,7 +1,5 @@
 export * from "./client";
-export * from "./voice";
 export * from './warnings';
-export * from './utils/image';
 export * from "./profile/persona";
 export * from "./profile/privateProfile";
 export * from "./profile/publicProfile";

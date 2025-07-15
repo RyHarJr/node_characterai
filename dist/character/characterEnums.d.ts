@@ -1,5 +1,3 @@
-import { CAIImage } from "../utils/image";
-import { CAIVoice } from "../voice";
 export declare enum CharacterVote {
     None = 0,
     Like = 1,
@@ -16,8 +14,6 @@ export interface ICharacterCreationExtraOptions {
     definition?: string;
     keepCharacterDefintionPrivate?: boolean;
     allowDynamicGreeting?: boolean;
-    voiceOrId?: CAIVoice | string;
-    avatar?: CAIImage;
 }
 export interface ICharacterModificationOptions {
     newName?: string;
@@ -28,7 +24,5 @@ export interface ICharacterModificationOptions {
     newDefinition?: string;
     keepCharacterDefintionPrivate?: boolean;
     enableDynamicGreeting?: boolean;
-    voiceOrId?: CAIVoice | string;
-    editAvatar: boolean;
 }
 //# sourceMappingURL=characterEnums.d.ts.map

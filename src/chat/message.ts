@@ -1,6 +1,5 @@
 import { getterProperty, hiddenProperty, Specable } from "../utils/specable";
 import { CharacterAI, CheckAndThrow } from "../client";
-import { CAIImage } from "../utils/image";
 import ObjectPatcher from "../utils/patcher";
 import { Candidate, EditedCandidate } from "./candidate";
 import { Conversation } from "./conversation";
@@ -14,9 +13,6 @@ export class CAIMessage extends Specable {
     private client: CharacterAI;
     @hiddenProperty
     private conversation: Conversation;
-
-    @hiddenProperty
-    private image?: CAIImage;
 
     // turn_key
     @hiddenProperty

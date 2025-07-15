@@ -1,6 +1,5 @@
 import { Specable } from "../utils/specable";
 import { CharacterAI } from "../client";
-import { CAIImage } from "../utils/image";
 import { CAIMessage } from "./message";
 export interface ICAIConversationCreation {
     messages?: any[];
@@ -15,7 +14,6 @@ export declare enum ConversationVisibility {
 }
 export interface ICAIMessageSending {
     manualTurn: boolean;
-    image?: CAIImage;
     getMyMessageInstead: boolean;
 }
 export declare class Conversation extends Specable {
@@ -128,10 +126,6 @@ export declare class Conversation extends Specable {
     private preferred_model_type;
     get preferredModelType(): string;
     protected set preferredModelType(value: string);
-    /**
-     * Sets the model for this character.
-     * **CAREFUL**: use `characterAI.getAvailableModels()` for the id
-     */
     setPreferredModelType(modelId: string): Promise<void>;
     getLastMessage(): CAIMessage | null;
     protected frozen: boolean;

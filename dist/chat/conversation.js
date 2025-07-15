@@ -42,19 +42,11 @@ class Conversation extends specable_1.Specable {
     set creatorId(value) { this.creator_id = value; }
     get characterId() { return this.character_id; }
     set characterId(value) { this.character_id = value; }
-    // features
     async getCharacter() { return await this.client.fetchCharacter(this.character_id); }
-    // currently not available use creatorId instead
     async getCreator() { return await this.client.fetchProfileByUsername(this.creator_id); }
     get preferredModelType() { return this.preferred_model_type; }
     set preferredModelType(value) { this.preferred_model_type = value; }
-    // https://neo.character.ai/chat/${id}/preferred-model-type
-    /**
-     * Sets the model for this character.
-     * **CAREFUL**: use `characterAI.getAvailableModels()` for the id
-     */
     async setPreferredModelType(modelId) {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         const request = await this.client.requester.request(`https://neo.character.ai/chat/${this.chatId}/preferred-model-type`, {
             method: 'PATCH',
             includeAuthorization: true,
@@ -65,17 +57,15 @@ class Conversation extends specable_1.Specable {
             throw new Error(String(response));
         this.preferredModelType = modelId;
     }
-    // (in cache)
     getLastMessage() {
         return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
     }
     async getTurnsBatch(nextToken, pinnedOnly) {
         let query = "";
         if (nextToken)
-            query = `?next_token=${encodeURIComponent(nextToken)}`; // }
+            query = `?next_token=${encodeURIComponent(nextToken)}`;
         if (pinnedOnly)
             query = "?pinned_only=true";
-        // console.log(`https://neo.character.ai/turns/${this.chatId}/${query}`);
         const request = await this.client.requester.request(`https://neo.character.ai/turns/${this.chatId}/${query}`, {
             method: 'GET',
             includeAuthorization: true
@@ -85,16 +75,12 @@ class Conversation extends specable_1.Specable {
             throw new Error(response);
         return response;
     }
-    // responsible for checking if we reached the limit to avoid too much memory usage
     addMessage(message) {
-        // messages are always ranked from more recent to oldest
         if (this.processingMessages.length >= this.maxMessagesStored) {
-            // remove last & show warning
             this.processingMessages.pop();
             this.processingMessages.pop();
             warnings_1.default.show("reachedMaxMessages");
         }
-        // add to front
         this.processingMessages.unshift(message);
         this.messageIds.unshift(message.turnId);
         this.cachedMessages = this.processingMessages;
@@ -112,7 +98,7 @@ class Conversation extends specable_1.Specable {
             const { turns } = response;
             if (!turns)
                 break;
-            if (turns["length"] == 0)
+            if (turns.length === 0)
                 break;
             nextToken = (_a = response === null || response === void 0 ? void 0 : response.meta) === null || _a === void 0 ? void 0 : _a.next_token;
             for (let j = 0; j < turns.length; j++)
@@ -120,7 +106,6 @@ class Conversation extends specable_1.Specable {
         }
         return messages;
     }
-    // keeps up to date with messages. this WILL wipe old messages
     async refreshMessages() {
         if (this.frozen)
             return;
@@ -140,20 +125,18 @@ class Conversation extends specable_1.Specable {
         this.frozen = false;
     }
     async sendMessage(content, options) {
-        // DO NOT touch this. This is abstract/virtual behavior for higher level conversations (DM/Group)
         return new message_1.CAIMessage(this.client, this, {});
     }
     async getPinnedMessages() {
         return await this.fetchMessagesViaQuery(true);
     }
-    async rename(newName) {
-        // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
-    }
+    async rename(newName) { }
     async regenerateMessage(message) {
-        // This is an abstract placeholder for higher level conversations (DM/Group), do not touch
         return new message_1.CAIMessage(this.client, new Conversation(this.client, {}), {});
     }
-    async reset() { return await this.deleteMessagesInBulk(await this.fetchMessagesViaQuery(false, 999999)); }
+    async reset() {
+        return await this.deleteMessagesInBulk(await this.fetchMessagesViaQuery(false, 999999));
+    }
     async deleteTurns(turnIds, refreshMessages) {
         await this.client.sendDMWebsocketCommandAsync({
             command: "remove_turns",
@@ -169,60 +152,46 @@ class Conversation extends specable_1.Specable {
             await this.refreshMessages();
     }
     async deleteMessagesInBulk(input, refreshMessages = true) {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         warnings_1.default.show('deletingInBulk');
         let turnIds = [];
-        if (typeof input == 'number') {
+        if (typeof input === 'number') {
             if (input <= 0 || input >= this.maxMessagesStored)
-                throw new Error("Invalid deletion range. The input number must be positive and reach within your messageCache limit.");
-            // 200 - 50 for example
+                throw new Error("Invalid deletion range.");
             const messageCount = this.messages.length;
             const fetchedMessages = this.messages.slice(messageCount - input, messageCount);
             turnIds = fetchedMessages.map(message => message.turnId);
         }
         else if (Array.isArray(input)) {
-            // if its a string instance, just copy and paste
-            let assumedArray = input;
-            if (assumedArray.every(item => typeof item === 'string'))
-                turnIds = assumedArray;
-            // if instance, get all ids
-            if (assumedArray.every(item => item instanceof message_1.CAIMessage))
-                turnIds = assumedArray.map(message => message.turnId);
+            if (input.every(item => typeof item === 'string'))
+                turnIds = input;
+            if (input.every(item => item instanceof message_1.CAIMessage))
+                turnIds = input.map(message => message.turnId);
         }
-        if (turnIds.length == 0)
+        if (turnIds.length === 0)
             return;
         return await this.deleteTurns(turnIds, refreshMessages);
     }
     async deleteMessageById(turnId, refreshMessages = true) {
-        // this.client.checkAndThrow(CheckAndThrow.RequiresAuthentication);
         return await this.deleteMessagesInBulk([turnId], refreshMessages);
     }
-    async deleteMessage(message, refreshMessages = true) { return this.deleteMessageById(message.turnId, refreshMessages); }
+    async deleteMessage(message, refreshMessages = true) {
+        return this.deleteMessageById(message.turnId, refreshMessages);
+    }
     constructor(client, information) {
         super();
-        // max messages stored before it enters into a snake like thing to delete the oldest messages from memory. 
-        // must be a multiple of 50.
         this.maxMessagesStored = 200;
         this.cachedMessages = [];
         this.processingMessages = [];
         this.messageIds = [];
-        // chat_id
         this.chat_id = "";
-        // create_time
         this.create_time = "";
-        // creator_id
         this.creator_id = "";
-        // character_id
         this.character_id = "";
-        // state
         this.state = ConversationState.Active;
-        // type
         this.type = "TYPE_ONE_ON_ONE";
-        // visibility
         this.visibility = ConversationVisibility.Private;
-        // preferred_model_type
         this.preferred_model_type = "";
-        this.frozen = false; // <- if refreshing, operations will be frozen
+        this.frozen = false;
         this.client = client;
         patcher_1.default.patch(this.client, this, information);
     }
