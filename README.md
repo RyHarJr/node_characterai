@@ -22,4 +22,4 @@
 ## 🚀 Instalasi
 
 ```bash
-npm install node_characterai-lite
+npm install github:RyHarJr/node_characterai
